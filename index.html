@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tretmann">
+  <meta name="description" content="Tretmann - Ergometer Trainingserfassung & Statistik (PWA)">
+
+  <title>🚴 Tretmann</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app-container">
+
+  <!-- Kopfzeile mit Sicherungsfunktionen -->
+  <header>
+    <div class="header-title">
+      <span>🚴</span>
+      <span>Tretmann</span>
+    </div>
+    <div class="header-actions">
+      <button id="btn-backup-export" class="icon-btn" title="Datensicherung exportieren (JSON)">💾</button>
+      <button id="btn-backup-import" class="icon-btn" title="Datensicherung importieren">📂</button>
+      <input type="file" id="file-import" accept=".json" style="display:none;">
+    </div>
+  </header>
+
+  <!-- Bearbeitungs-Banner -->
+  <div id="banner-edit-mode" class="banner edit-mode hidden">
+    <span id="lbl-edit-status">✏️ Bearbeitungsmodus</span>
+  </div>
+
+  <!-- Filter- / Info-Banner -->
+  <div id="banner-data-info" class="banner info-mode hidden">
+    <span id="lbl-data-info-text">ℹ️ Info</span>
+    <button id="btn-clear-day-filter" class="icon-btn hidden" style="width:24px; height:24px; font-size:0.8rem; background:rgba(0,0,0,0.12); color:inherit;" title="Tagesfilter aufheben">✕</button>
+  </div>
+
+  <!-- BROWSER 1: EINGABE-OBERFLÄCHE -->
+  <main id="screen-input" class="screen">
+    
+    <!-- Name & Combobox -->
+    <div class="form-group">
+      <label for="field-name">Person / Name</label>
+      <div class="name-combobox">
+        <input type="text" id="field-name" placeholder="Name eingeben oder wählen" autocomplete="off">
+        <button id="btn-name-menu" class="combobox-btn" title="Vorhandene Person auswählen">👤</button>
+        <button id="btn-delete-person" class="combobox-btn delete" title="Person & Trainingsdaten löschen">🗑️</button>
+      </div>
+    </div>
+
+    <!-- Datum -->
+    <div class="form-group">
+      <label for="field-date">Datum</label>
+      <input type="text" id="field-date" placeholder="TT.MM.JJJJ" inputmode="numeric">
+      <div class="helper-text">Schnelleingabe: z. B. "19" oder "19.11"</div>
+    </div>
+
+    <!-- Widerstand & Distanz -->
+    <div class="form-row">
+      <div class="form-group" style="flex:1;">
+        <label for="field-resistance">Widerstand</label>
+        <input type="text" id="field-resistance" placeholder="z. B. 10" inputmode="numeric">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label for="field-distance">Distanz (km)</label>
+        <input type="number" step="0.01" id="field-distance" placeholder="0.00" inputmode="decimal">
+      </div>
+    </div>
+
+    <!-- RPM & Zeit -->
+    <div class="form-row">
+      <div class="form-group" style="flex:1;">
+        <label for="field-rpm">RPM (Trittfreq.)</label>
+        <input type="number" id="field-rpm" placeholder="z. B. 80" inputmode="numeric">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label for="field-duration">Trainingszeit</label>
+        <input type="text" id="field-duration" placeholder="MM:SS" inputmode="numeric">
+        <div class="helper-text">z. B. "30" oder "30:15"</div>
+      </div>
+    </div>
+
+    <!-- Ø km/h & Kalorien -->
+    <div class="form-row">
+      <div class="form-group" style="flex:1;">
+        <label for="field-speed">Ø km/h</label>
+        <input type="number" step="0.01" id="field-speed" placeholder="0.00" inputmode="decimal">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label for="field-calories">Kalorien (kcal)</label>
+        <input type="number" id="field-calories" placeholder="kcal" inputmode="numeric">
+      </div>
+    </div>
+
+    <!-- Puls -->
+    <div class="form-group">
+      <label for="field-pulse">Durchschnitts-Puls (bpm)</label>
+      <input type="number" id="field-pulse" placeholder="z. B. 125" inputmode="numeric">
+    </div>
+
+    <!-- Aktions-Buttons Eingabe -->
+    <div class="button-stack">
+      <div class="button-grid">
+        <button id="btn-personalize" class="btn btn-tonal" title="Werte als Profil für diese Person merken">⭐ Voreinstellen</button>
+        <button id="btn-save" class="btn btn-primary">Speichern</button>
+      </div>
+      <div class="button-grid">
+        <button id="btn-cancel-input" class="btn btn-outline">Abbrechen</button>
+        <button id="btn-switch-data" class="btn btn-secondary">📊 Daten anzeigen</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BROWSER 2: DATEN- & STATISTIK-OBERFLÄCHE -->
+  <main id="screen-data" class="screen hidden">
+
+    <!-- Statistik-Karte oben -->
+    <div class="stat-card">
+      <div class="stat-header">
+        <h3>Monatsübersicht</h3>
+        <div id="stat-total-all-km" class="stat-total-km">Gesamt: 0.00 km</div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <span class="label">Trainings:</span>
+          <span id="stat-count" class="value">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Distanz:</span>
+          <span id="stat-dist" class="value">0.00 km</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Gesamtzeit:</span>
+          <span id="stat-time" class="value">00:00</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Kalorien:</span>
+          <span id="stat-calories" class="value">0 kcal</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Ø Puls:</span>
+          <span id="stat-pulse" class="value">0.0 bpm</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Ø km/h:</span>
+          <span id="stat-speed" class="value">0.0 km/h</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filterleiste: Name | Monat | Tag | Jahr -->
+    <div class="filter-bar">
+      <select id="filter-name" title="Nach Person filtern"></select>
+      <select id="filter-month" title="Monat wählen"></select>
+      <button id="btn-calendar-search" class="btn btn-outline" title="Tage mit Trainings im Monat anzeigen">📅 Tag</button>
+      <select id="filter-year" title="Jahr wählen"></select>
+    </div>
+
+    <!-- Trainingsliste -->
+    <div id="trainings-list" class="training-list">
+      <!-- Wird dynamisch durch app.js befüllt -->
+    </div>
+
+    <!-- Aktions-Buttons Daten -->
+    <div class="button-stack">
+      <div class="button-grid">
+        <button id="btn-edit-training" class="btn btn-tonal">✏️ Ändern</button>
+        <button id="btn-delete-training" class="btn btn-danger">🗑️ Löschen</button>
+      </div>
+      <div class="button-grid">
+        <button id="btn-delete-person-data" class="btn btn-outline" style="color:var(--danger); border-color:var(--danger);" title="Ausgewählte Person löschen">👤 Person löschen</button>
+        <button id="btn-back-input" class="btn btn-primary">➕ Neues Training</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bestätigungs- & Auswahl-Modal -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3 id="modal-title" class="modal-title">Titel</h3>
+      <div id="modal-body" class="modal-body">Inhalt</div>
+      <div class="modal-actions">
+        <button id="modal-btn-cancel" class="btn btn-outline">Abbrechen</button>
+        <button id="modal-btn-confirm" class="btn btn-danger">Bestätigen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast-Benachrichtigung -->
+  <div id="toast" class="toast">Hinweis</div>
+
+</div>
+
+<!-- Anwendungs-Logik -->
+<script src="app.js"></script>
+</body>
+</html>
